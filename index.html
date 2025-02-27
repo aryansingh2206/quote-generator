@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Quote Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .quote-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .quote-container:hover {
+            transform: scale(1.02);
+        }
+
+        .quote-text {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+
+        .quote-author {
+            margin-top: 10px;
+            font-size: 1.1em;
+            color: #555;
+            font-style: italic;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        button {
+            background: #ff6f61;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        button:hover {
+            background: #ff3b2f;
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(255, 63, 52, 0.6);
+        }
+
+        .loading {
+            font-size: 1.2em;
+            color: #888;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quote-container">
+        <p class="loading">Fetching quote...</p>
+        <p class="quote-text"></p>
+        <p class="quote-author"></p>
+        <div class="buttons">
+            <button id="newQuoteBtn" onclick="getQuote()">New Quote</button>
+            <button onclick="copyQuote()">Copy</button>
+        </div>
+    </div>
+
+    <script>
+        const quoteText = document.querySelector('.quote-text');
+        const quoteAuthor = document.querySelector('.quote-author');
+        const loadingText = document.querySelector('.loading');
+        const newQuoteBtn = document.getElementById('newQuoteBtn');
+
+        // Hardcoded fallback quotes if API fails
+        const fallbackQuotes = [
+            { content: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+            { content: "Do what you can, with what you have, where you are.", author: "Theodore Roosevelt" },
+            { content: "Your time is limited, so don’t waste it living someone else’s life.", author: "Steve Jobs" },
+            { content: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+            { content: "The best way to predict the future is to invent it.", author: "Alan Kay" }
+        ];
+
+        async function getQuote() {
+            newQuoteBtn.disabled = true; // Disable button while fetching
+            loadingText.style.display = "block";
+            quoteText.style.opacity = "0";
+            quoteAuthor.style.opacity = "0";
+
+            try {
+                const response = await fetch('https://api.quotable.io/random');
+                if (!response.ok) throw new Error("API error"); // Handle bad response
+                const data = await response.json();
+
+                quoteText.textContent = `"${data.content}"`;
+                quoteAuthor.textContent = `- ${data.author}`;
+            } catch (error) {
+                console.error("Quote fetch failed:", error);
+
+                // Pick a random fallback quote
+                const fallback = fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)];
+                quoteText.textContent = `"${fallback.content}"`;
+                quoteAuthor.textContent = `- ${fallback.author}`;
+            } finally {
+                loadingText.style.display = "none";
+                setTimeout(() => {
+                    quoteText.style.opacity = "1";
+                    quoteAuthor.style.opacity = "1";
+                    quoteText.style.animation = "fadeIn 0.5s ease-in-out forwards";
+                    newQuoteBtn.disabled = false; // Re-enable button
+                }, 100);
+            }
+        }
+
+        function copyQuote() {
+            navigator.clipboard.writeText(quoteText.textContent + " " + quoteAuthor.textContent)
+                .then(() => alert("Quote copied to clipboard!"))
+                .catch(() => alert("Failed to copy quote."));
+        }
+
+        // Fetch first quote on page load
+        getQuote();
+    </script>
+</body>
+</html>
